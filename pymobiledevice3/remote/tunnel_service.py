@@ -5,6 +5,7 @@ import dataclasses
 import hashlib
 import json
 import logging
+import os
 import platform
 import plistlib
 import ssl
@@ -80,6 +81,7 @@ else:
 if sys.platform == 'win32':
     def wintun_logger(level: int, timestamp: int, message: str) -> None:
         logging.getLogger('wintun').info(message)
+
 
     set_logger(wintun_logger)
 
@@ -368,6 +370,7 @@ class RemotePairingProtocol:
             'key': base64.b64encode(
                 private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
             ).decode(),
+            'peerConnectionsInfo': [{'owningPID': os.getpid(), 'owningProcessName': 'CoreDeviceService'}],
             'transportProtocolType': 'quic'}}}}
 
         response = self._send_receive_encrypted_request(request)
@@ -376,6 +379,7 @@ class RemotePairingProtocol:
     def create_tcp_listener(self) -> Mapping:
         request = {'request': {'_0': {'createListener': {
             'key': base64.b64encode(self.encryption_key).decode(),
+            'peerConnectionsInfo': [{'owningPID': os.getpid(), 'owningProcessName': 'CoreDeviceService'}],
             'transportProtocolType': 'tcp'}}}}
         response = self._send_receive_encrypted_request(request)
         return response['createListener']
@@ -715,6 +719,7 @@ class RemotePairingProtocol:
 
         encrypted_data = self._decode_bytes_if_needed(response['message']['streamEncrypted']['_0'])
         plaintext = self.server_cip.decrypt(nonce, encrypted_data, None)
+        print('resp', plaintext)
         return json.loads(plaintext)['response']['_1']
 
     def _send_receive_handshake(self, handshake_data: Mapping) -> Mapping:
@@ -810,11 +815,12 @@ class RemotePairingTunnelService(RemotePairingProtocol):
 
     def connect(self, autopair: bool = True) -> None:
         self._connection = ServiceConnection.create_using_tcp(self.hostname, self.port)
-
-        self._attempt_pair_verify()
-        if not self._validate_pairing():
-            raise ConnectionAbortedError()
-        self._init_client_server_main_encryption_keys()
+        super().connect(autopair=autopair)
+        #
+        # self._attempt_pair_verify()
+        # if not self._validate_pairing():
+        #     raise ConnectionAbortedError()
+        # self._init_client_server_main_encryption_keys()
 
     def close(self) -> None:
         self._connection.close()

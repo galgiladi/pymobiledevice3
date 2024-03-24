@@ -8,7 +8,7 @@ from ifaddr import get_adapters
 from zeroconf import IPVersion, ServiceListener, ServiceStateChange, Zeroconf
 from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
 
-REMOTEPAIRING_SERVICE_NAME = '_remotepairing._tcp.local.'
+REMOTEPAIRING_SERVICE_NAME = '_remotepairing-manual-pairing._tcp.local.'
 MOBDEV2_SERVICE_NAME = '_apple-mobdev2._tcp.local.'
 REMOTED_SERVICE_NAME = '_remoted._tcp.local.'
 DEFAULT_BONJOUR_TIMEOUT = 1 if sys.platform != 'win32' else 2  # On Windows, it takes longer to get the addresses
